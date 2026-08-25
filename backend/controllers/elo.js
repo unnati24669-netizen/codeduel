@@ -7,10 +7,10 @@ function calculateElo(rating1,rating2,winner){
        
         if(winner==1){
             newRating1=rating1+K*(1-e);
-            newRating2=rating2+k*(e-1);
+            newRating2=rating2+K*(e-1);
         }else{
              newRating1=rating1+K*(0-e);
-            newRating2=rating2+k*(e);
+            newRating2=rating2+K*(e);
 
         }
 

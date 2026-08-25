@@ -9,22 +9,28 @@ const app=express();
 const server=require("http").createServer(app);
 const {initsocket}=require("./socket/index")
 const matchrouter=require("./routes/matchroute")
+const router=require("./routes/groqroute")
+const leaderboardRouter=require("./routes/leaderboardroute")
+const {limiter}=require("./rate-limiter")
+const {strictLimiter}=require("./rate-limiter")
 app.use(express.json());
 app.use(cors({
     origin:"http://localhost:5173",
     credentials:true
 }));
 
+
 app.use("/api/user",userRouter);
 app.use("/api/question",questionRouter)
+app.use("/api/leaderboard",leaderboardRouter)
 let io;
-mongoose.connect(process.env.MONGO_URL).then(()=>{console.log("Connected to MongoDB")
-    io=initsocket(server);
+mongoose.connect(process.env.MONGO_URL).then(async()=>{
+    console.log("Connected to MongoDB")
+    io = await initsocket(server);
     app.use("/api/match",matchrouter(io));
+    app.use("/api/groq",router);
     server.listen(process.env.PORT,()=> {
-    console.log(`Server is running on port ${process.env.PORT}`)
-})
-
-
+        console.log(`Server is running on port ${process.env.PORT}`)
+    })
 }).catch((err)=>console.log(err));
 

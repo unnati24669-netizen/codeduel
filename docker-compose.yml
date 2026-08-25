@@ -1,0 +1,45 @@
+services:
+
+  redis:
+    image: redis:alpine
+    ports:
+        - "6379:6379"
+    
+
+  backend:
+    build: ./backend
+
+    env_file: ./backend/.env
+
+    environment:
+     REDIS_URL: redis://redis:6379
+
+    ports:
+     - "5500:5500"
+
+    depends_on:
+      - redis
+
+
+  frontend:
+    build: 
+     context: ./frontend
+     args: 
+       - VITE_BACKEND_URL=http://localhost:5500
+      
+
+    ports:
+     - "5173:80"
+
+
+    
+    
+
+
+
+
+   
+ 
+  
+  
+

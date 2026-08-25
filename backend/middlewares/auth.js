@@ -14,9 +14,12 @@ function  authentication(req,res,next){
 
     const isAuthenticated=jwt.verify(token,JWT_SECRET);
 
- 
-        req.user=isAuthenticated
-       next()
+        req.user={
+            _id:isAuthenticated.id,
+            id:isAuthenticated.id,
+            role:isAuthenticated.role
+        }
+        next()
     
 
 }catch(err){

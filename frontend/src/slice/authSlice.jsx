@@ -1,13 +1,13 @@
 import{createSlice,createAsyncThunk} from "@reduxjs/toolkit"
 import authapi from "../api/axiosInstance"
-const initialstate={
+const initialState={
     token:localStorage.getItem("token"),
     user:{},
     isLoading:false,
     isError:false
 }
 
-const signup=createAsyncThunk("/signup",async({username,email,firstName,lastName,password},thunkAPI)=>{
+export const signup=createAsyncThunk("/signup",async({username,email,firstName,lastName,password},thunkAPI)=>{
     try{
        const res=await authapi.post("/user/signup",{
          username,email,firstName,lastName,password
@@ -22,7 +22,7 @@ const signup=createAsyncThunk("/signup",async({username,email,firstName,lastName
 })
   
 
-const login=createAsyncThunk("/login",async({email,password},thunkAPI)=>{
+export const login=createAsyncThunk("/login",async({email,password},thunkAPI)=>{
     try{
        const res=await authapi.post("/user/login",{
         email,password
@@ -37,7 +37,7 @@ const login=createAsyncThunk("/login",async({email,password},thunkAPI)=>{
 })
 
 
-const adminUpdate=createAsyncThunk("/admin",async(id,thunkAPI)=>{
+export const adminUpdate=createAsyncThunk("/admin",async(id,thunkAPI)=>{
    try{
            const res=await authapi.put(`/user/${id}`)
            return res.data;
@@ -55,6 +55,13 @@ export const authSlice=createSlice({
             localStorage.removeItem("token");
             state.token=null;
             state.isError=false;
+        },
+
+        setUser:(state,action)=>{
+           state.user._id=action.payload.userId ?? action.payload.userID ?? action.payload.id;
+           state.isError=false;
+           state.token=action.payload.token ?? state.token
+           
         }
     },
 
@@ -79,8 +86,10 @@ export const authSlice=createSlice({
         })
         .addCase(login.fulfilled,(state,action)=>{
             state.token=action.payload.token
+            state.user._id=action.payload.userId
             state.isLoading=false;
             state.isError=false;
+            localStorage.setItem("token", action.payload.token);
         })
         .addCase(login.rejected,(state,action)=>{
             state.isError=true;
@@ -107,5 +116,5 @@ export const authSlice=createSlice({
 
 )
 
-
+export const {logout, setUser} = authSlice.actions;
 export default authSlice.reducer;

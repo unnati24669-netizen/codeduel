@@ -4,7 +4,7 @@ import {matchFound,questionfound,matchDetails,matchResult} from "./slice/matchSl
 
 export function matching(dispatch){
     const io=ioCreation();
-     io.off("matchfound");//this cleans up the old listeners before registering new one
+    
     io.emit("joinQueue");
    
     io.on("matchfound",({matchId,questionId})=>{
@@ -12,11 +12,29 @@ export function matching(dispatch){
         dispatch(matchDetails({id:matchId}))
         dispatch(questionfound({questionId}));
     })
-    io.on("match ended",({winner,matchId,newRating1,newRating2})=>{
-        dispatch(matchResult({winner,matchId,newRating1,newRating2}))
-    })
+    
+
+    return io;
 
     }
+
+export function unmatch(io){
+     io.off("matchfound");//this cleans up the old listeners
+     
+     io.emit("leaveQueue");
+}
+
+export function listenMatchEnd(io,dispatch){
+    io.on("matchended",({winner,matchId,data1,data2,status})=>{
+        dispatch(matchResult({winner,matchId,data1,data2,status}))
+    })
+
+    
+}
+
+export function removeMatchEnd(io){
+    io.off("matchended");
+}
 
 
     

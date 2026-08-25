@@ -2,7 +2,10 @@ const User=require("../models/user.js");
 const bcrypt=require("bcrypt")
 const {z}=require("zod")
 const jwt=require("jsonwebtoken")
+const dotenv=require("dotenv")
+dotenv.config()
 const JWT_SECRET=process.env.JWT_SECRET
+
 
 const requiredBody = z.object({
     username:z.string(),
@@ -78,7 +81,8 @@ const loginController=async function(req,res){
         const token=jwt.sign({id:player._id,role:player.role},JWT_SECRET,{expiresIn:"7d"});
         
         res.json({
-            token
+            token,
+            userId: player._id
         })
 
 
@@ -107,13 +111,15 @@ const adminUpdate=async function(req,res){
         {_id:userId},
         {role:"admin"},{new:true}
     )
+    
     if(!admin){
         return res.status(404).json({
             message:"some error occured"
         })
     }
+    const token=jwt.sign({id:admin._id,role:admin.role},JWT_SECRET,{expiresIn:"7d"});
     return res.json({
-        message:"succefully added you as admin"
+        token,role:admin.role
     })
 
 
@@ -127,5 +133,21 @@ const adminUpdate=async function(req,res){
 }
 }
 
+const profileController=async function (req,res){
+    try{
+        const userId=req.params.id;
+        if(!userId){
+            return res.status(400).json({message:"sent the id of user"})
+        }
+        const profile=await User.findById(userId);
 
- module.exports={userController,loginController,adminUpdate}
+        return res.status(200).json({username:profile.username,rating:profile.rating,matchesPlayed:profile.matchesPlayed,wins:profile.wins,losses:profile.losses})
+
+
+    }catch(err){
+       return res.status(500).json({message:"some error occurred"})
+    }
+}
+
+
+ module.exports={userController,loginController,adminUpdate,profileController}

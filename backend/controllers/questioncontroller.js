@@ -65,7 +65,7 @@ const getQuestion =async function(req,res){
     const newquestion=question.toObject();
     newquestion.testcases=newquestion.testcases.filter((tc)=>tc.isHidden!==true)
 
-    return res.json({newquestion});
+    return res.json({question:newquestion});
 
 }catch(err){
     return res.status(500).json({
