@@ -31,7 +31,7 @@ afterAll(async()=>{
 
 
 beforeEach(async()=>{
-    player1=await User.create({
+    player1=(await User.create({
     username:"player1",
     email:"player1@example.com",
     firstName:"player1",
@@ -44,8 +44,8 @@ beforeEach(async()=>{
     role:"user"
      
 
-   })._id;
-    player2=await User.create({
+   }))._id;
+    player2=(await User.create({
     username:"player2",
     email:"player2@example.com",
     firstName:"player2",
@@ -56,16 +56,17 @@ beforeEach(async()=>{
     wins:0,
     losses:0,
     role:"user"
-   })._id;
+   }))._id;
    
-   QuestionId=await Question.create({
+   QuestionId=(await Question.create({
     title:"print Hello World",
     description:"print hello world",
-    tag:"easy",
-    testcases:[{"input":"","output":"Hello World"}],
-    timelimit:2
+    difficulty:"easy",
+    tag:["beginner"],
+    testcases:[{"input":"x","output":"Hello World"}],
+    timeLimit:2
 
-   })._id
+   }))._id
    const doc=await Match.create({
     player1,
     player2,
@@ -80,6 +81,11 @@ beforeEach(async()=>{
    matchId=doc._id;
 
    
+})
+afterEach(async()=>{
+    await User.deleteMany({});
+    await Match.deleteMany({});
+    await Question.deleteMany({})
 })
 
 //player1 submits correct solution first and win the match
@@ -105,12 +111,12 @@ test("Player1 submits correct solution first and wins the match", async () => {
                 expect(res.json).toHaveBeenCalledWith({message:"correct solution"});
                 
                 const updatedMatch=await Match.findById(matchId);
-                const updatePlayer1=await User.findById(player1);
+                const updatedPlayer1=await User.findById(player1);
                 const updatedPlayer2=await User.findById(player2);
                 expect(updatedMatch.status).toBe("completed")
                 expect(updatedMatch.result).toBe("player1");
                 expect(updatedPlayer1.wins).toBe(1);
-                expect(updatePlayer2.losses).toBe(1);
+                expect(updatedPlayer2.losses).toBe(1);
                 expect(updatedPlayer1.rating).not.toBe(1200);
 
 
@@ -171,12 +177,12 @@ test("Player2 submits correct solution first and wins the match", async () => {
                 expect(res.json).toHaveBeenCalledWith({message:"correct solution"});
                 
                 const updatedMatch=await Match.findById(matchId);
-                const updatePlayer1=await User.findById(player1);
+                const updatedPlayer1=await User.findById(player1);
                 const updatedPlayer2=await User.findById(player2);
                 expect(updatedMatch.status).toBe("completed")
                 expect(updatedMatch.result).toBe("player2");
                 expect(updatedPlayer1.losses).toBe(1);
-                expect(updatePlayer2.wins).toBe(1);
+                expect(updatedPlayer2.wins).toBe(1);
                 expect(updatedPlayer1.rating).not.toBe(1200);
 
 
@@ -202,7 +208,7 @@ test("Player1 submits wrong solution", async () => {
                 })
                 axios.get.mockResolvedValue({
                     data:{
-                        status:{id:2}
+                        status:{id:4}
                     }
                 })
                 const handler = createSubmitQuestion(io);
@@ -240,8 +246,8 @@ test("someone who is not the player submits the code", async () => {
                 })
                 const handler = createSubmitQuestion(io);
                 await handler(req, res);
-                expect(res.json).toHaveBeenCalledWith({message:"invalid or missing user id"});
-                expect(res.json).toHaveBeenCalledWith(401)
+                expect(res.json).toHaveBeenCalledWith({message:"you are not a participant in this match"});
+                expect(res.status).toHaveBeenCalledWith(403)
                 
                 
 
@@ -307,7 +313,7 @@ test("code is missing", async () => {
                 const handler = createSubmitQuestion(io);
                 await handler(req, res);
                 expect(res.json).toHaveBeenCalledWith({message:"code, languageId and matchId are required"});
-                expect(res.json).toHaveBeenCalledWith(400)
+                expect(res.status).toHaveBeenCalledWith(400)
                 
                 
 
@@ -342,7 +348,7 @@ test("code is missing", async () => {
                 const handler = createSubmitQuestion(io);
                 await handler(req, res);
                 expect(res.json).toHaveBeenCalledWith({message:"match not found"});
-                expect(res.json).toHaveBeenCalledWith(400)
+                expect(res.status).toHaveBeenCalledWith(404)
                 
                 
 
@@ -379,7 +385,7 @@ test("question not found", async () => {
                 const handler = createSubmitQuestion(io);
                 await handler(req, res);
                 expect(res.json).toHaveBeenCalledWith({message:"question not found"});
-                expect(res.json).toHaveBeenCalledWith(400)
+                expect(res.status).toHaveBeenCalledWith(404)
                 
                 
 
@@ -396,11 +402,12 @@ test("judge0 failure", async () => {
     
     const io = { to: jest.fn().mockReturnThis(), emit: jest.fn() };
                 const req={body:
-                    {languageId:71,matchId:matchId,},
+                    {languageId:71,matchId:matchId,code:"cout<<Hello World"},
                     user:{_id:player1}
+                    
                 };
                  const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
-                axios.post.mockResolvedValue(
+                axios.post.mockRejectedValue(
                     new Error("Network error")
                     
                 )
@@ -412,7 +419,7 @@ test("judge0 failure", async () => {
                 const handler = createSubmitQuestion(io);
                 await handler(req, res);
                 expect(res.json).toHaveBeenCalledWith({message:"judge0 evaluation failed"});
-                expect(res.json).toHaveBeenCalledWith(502)
+                expect(res.status).toHaveBeenCalledWith(502)
                 
                 
 

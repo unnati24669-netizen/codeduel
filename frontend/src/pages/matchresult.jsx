@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { languages } from "./matchroom";
-import { groqAPIreview, groqchatContinuation } from "../api/groqApi";
+import { geminiAPIreview, geminichatContinuation } from "../api/geminiapi";
 
 function Me({ username, ratingChange, status }) {
   const isWinner = status === "Winner";
@@ -18,7 +18,7 @@ function Me({ username, ratingChange, status }) {
   );
 }
 
-function GroqReview({ code, languageId, setGroq }) {
+function GeminiReview({ code, languageId, setGemini }) {
   const question = useSelector((state) => state.match.question);
   const language = languages.find((language) => language.languageId === languageId);
   const [history, setHistory] = useState([]);
@@ -33,7 +33,7 @@ function GroqReview({ code, languageId, setGroq }) {
     : null;
 
   useEffect(() => {
-    const callGroq = async () => {
+    const callGemini = async () => {
       try {
         if (!code) {
           setError(new Error("No code is available for review."));
@@ -49,23 +49,23 @@ function GroqReview({ code, languageId, setGroq }) {
         }
 
         const questionText = `${requiredQuestion.title}\n\n${requiredQuestion.description}\n\nTime Limit: ${requiredQuestion.timeLimit}`;
-        const reviewResponse = await groqAPIreview({ code, question: questionText, language: language.name });
+        const reviewResponse = await geminiAPIreview({ code, question: questionText, language: language.name });
         if (reviewResponse) {
-          setHistory((prev) => [...prev, reviewResponse]);
+          setHistory((prev) => [...prev, ...reviewResponse]);
         }
       } catch (err) {
         console.log(err);
         setError(err);
       }
     };
-    callGroq();
+    callGemini();
   }, [code, languageId, language, requiredQuestion]);
 
   async function chatContinue() {
     try {
-      const chatResponse = await groqchatContinuation({ input, history });
+      const chatResponse = await geminichatContinuation({ chat: input, history });
       if (chatResponse) {
-        setHistory((prev) => [...prev, chatResponse]);
+        setHistory(chatResponse);
       }
       setInput("");
     } catch (err) {
@@ -79,7 +79,7 @@ function GroqReview({ code, languageId, setGroq }) {
       <div className="flex justify-between items-center p-4 border-b border-slate-700">
         <span className="text-slate-200 font-medium">AI Review</span>
         <button
-          onClick={() => setGroq(false)}
+          onClick={() => setGemini(false)}
           className="text-slate-400 hover:text-slate-100 text-xl leading-none"
         >
           −
@@ -116,7 +116,7 @@ function GroqReview({ code, languageId, setGroq }) {
 }
 
 export default function Result() {
-  const [groq, setGroq] = useState(false);
+  const [gemini, setGemini] = useState(false);
   let my_code;
   let my_languageId;
 
@@ -175,15 +175,15 @@ export default function Result() {
             Rematch
           </button>
           <button
-            onClick={() => setGroq(true)}
+            onClick={() => setGemini(true)}
             className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2 rounded-md"
           >
             Review
           </button>
         </div>
 
-        {groq && (
-          <GroqReview code={my_code} languageId={my_languageId} setGroq={setGroq} />
+        {gemini && (
+          <GeminiReview code={my_code} languageId={my_languageId} setGemini={setGemini} />
         )}
       </div>
     </div>

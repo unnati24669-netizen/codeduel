@@ -56,6 +56,9 @@ async function runOnJudge0(code,languageId,input,output){
 function createSubmitQuestion(io){
     return async function (req,res){
        try {
+        if(!req.user?._id?.toString()){
+            return res.status(400).json({message:"unauthorized"});
+        }
         const {code,languageId,matchId}=req.body;
         if(!code || !languageId || !matchId){
             return res.status(400).json({message:"code, languageId and matchId are required"});
@@ -64,6 +67,10 @@ function createSubmitQuestion(io){
         const getMatch=await Match.findById(matchId);
         if(!getMatch){
             return res.status(404).json({message:"match not found"});
+        }
+        
+        if(getMatch.player1.toString()!==req.user._id.toString()&&getMatch.player2.toString()!==req.user._id.toString()){
+            return res.status(403).json({message:"you are not a participant in this match"});
         }
 
         const getQuestion=await Question.findById(getMatch.questionId);
@@ -77,16 +84,14 @@ function createSubmitQuestion(io){
                 return res.status(502).json({message:"judge0 evaluation failed"});
             }
             if(response.status.id!==3){
-                return res.json({message:"wrong solution"});
+                return res.status(400).json({message:"wrong solution"});
             }
         }
 
         let winner;
         let result;
         const userId = req.user?._id?.toString() || req.user?.id?.toString();
-        if(!userId){
-            return res.status(401).json({message:"invalid or missing user id"});
-        }
+        
         if(getMatch.player1.toString() === userId){
             winner=1;
             result="player1";
@@ -94,9 +99,7 @@ function createSubmitQuestion(io){
             winner=2;
             result="player2";
         }
-        else{
-            return res.status(400).json({message:"some error occured"});
-        }
+        
        
         const time=Date.now()-getMatch.createdAt;
         const {newRating1,newRating2}=calculateElo(getMatch.rating1,getMatch.rating2,winner);
@@ -118,7 +121,7 @@ function createSubmitQuestion(io){
         }
         
         io.to(matchId).emit("matchended",{winner:req.user._id,matchId,"data1":{playerId:getMatch.player1.toString(),newRating:newRating1},"data2":{playerId:getMatch.player2.toString(),newRating:newRating2},status:"completed"});
-        return res.json({message:"correct solution"});
+        return res.status(200).json({message:"correct solution"});
        } catch(err) {
             console.log("submit error:", err);
             return res.status(500).json({message:"could not submit the question"});
@@ -139,10 +142,10 @@ async function  getMatchData(req,res){
         if(!data){
             return res.status(404).json({message:"match not found"});
         }
-        res.json({data});
+        return res.status(200).json({data});
     }catch(err){
         console.log("getMatchData error:", err);
-        res.status(500).json({message:"could not fetch data"});
+        return res.status(500).json({message:"could not fetch data"});
     }
     
 }

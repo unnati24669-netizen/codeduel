@@ -9,7 +9,7 @@ const app=express();
 const server=require("http").createServer(app);
 const {initsocket}=require("./socket/index")
 const matchrouter=require("./routes/matchroute")
-const router=require("./routes/groqroute")
+const router=require("./routes/geminiroute")
 const leaderboardRouter=require("./routes/leaderboardroute")
 const {limiter}=require("./rate-limiter")
 const {strictLimiter}=require("./rate-limiter")
@@ -28,7 +28,7 @@ mongoose.connect(process.env.MONGO_URL).then(async()=>{
     console.log("Connected to MongoDB")
     io = await initsocket(server);
     app.use("/api/match",matchrouter(io));
-    app.use("/api/groq",router);
+    app.use("/api/gemini",router);
     server.listen(process.env.PORT,()=> {
         console.log(`Server is running on port ${process.env.PORT}`)
     })

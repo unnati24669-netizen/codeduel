@@ -1,14 +1,14 @@
 const axios = require('axios');
 
-async function groqApi(details){
+async function geminiApi(details){
     try{
 
     const response = await axios.post(
-        "https://api.groq.com/openai/v1/chat/completions",
+        "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
         {...details},
         {
             timeout: 20000,
-            headers: { "Authorization": `Bearer ${process.env.GROQ_API_KEY}` },
+            headers: { "Authorization": `Bearer ${process.env.GEMINI_API_KEY}` },
         }
     )
 
@@ -61,10 +61,10 @@ async function review(req,res){
         "role":"user",
         "content":`here is my code ${code} question ${questionText} and language ${language}`
     }],
-    "model":"openai/gpt-oss-120b",
+    "model":"gemini-2.0-flash",
     "temperature":0.5}
 
-    const response=await  groqApi(details)
+    const response=await  geminiApi(details)
     if(response.reply==="error"){
         return res.status(500).json({"failure":"some error has occured"})
     }
@@ -95,10 +95,10 @@ async function chatContinuation(req,res){
     
 
     const details={"messages":[{"role":"system","content":systemPrompt},...history,{"role":"user","content":chat}],
-    "model":"openai/gpt-oss-120b",
+    "model":"gemini-2.0-flash",
     "temperature":0.5}
 
-    const response=await groqApi(details)
+    const response=await geminiApi(details)
     if(response.reply==="error"){
         return res.status(500).json({"failure":"some error occured"})
     }

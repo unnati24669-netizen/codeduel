@@ -5,6 +5,7 @@ const jwt=require("jsonwebtoken")
 const dotenv=require("dotenv")
 dotenv.config()
 const JWT_SECRET=process.env.JWT_SECRET
+const Match=require("../models/match.js")
 
 
 const requiredBody = z.object({
@@ -140,8 +141,46 @@ const profileController=async function (req,res){
             return res.status(400).json({message:"sent the id of user"})
         }
         const profile=await User.findById(userId);
+        if(!profile){
+            return res.status(404).json({message:"user not found"})
+        }
+        const requiredMatch=await Match.find({$or:[{player1:userId},{player2:userId}],status:"completed"}).sort({createdAt:1});
+         const heatmapMatch=await Match.find({$or:[{player1:userId},{player2:userId}],status:"completed"});
+        let playerRating=[];
 
-        return res.status(200).json({username:profile.username,rating:profile.rating,matchesPlayed:profile.matchesPlayed,wins:profile.wins,losses:profile.losses})
+        for(const Matchs of requiredMatch){
+        if(Matchs.player1.equals(userId)){
+            playerRating.push({rating:Matchs.rating1,date:Matchs.createdAt});
+        }
+        else{
+            playerRating.push({rating:Matchs.rating2,date:Matchs.createdAt});
+        }
+       }
+
+       playerRating.push({rating:profile.rating,date:new Date()});
+
+       
+    
+    const dates={};
+    for(const matches of heatmapMatch){
+         const day=matches.createdAt.toISOString().split("T")[0];
+         if(dates[day]){
+            dates[day]+=1;
+         }
+         else{
+            dates[day]=1;
+         }
+        
+    }
+
+    const finaldates=[];
+
+    for(const day in dates){
+        finaldates.push({date:day, count:dates[day]});
+
+    }
+
+        return res.status(200).json({username:profile.username,rating:profile.rating,matchesPlayed:profile.matchesPlayed,wins:profile.wins,losses:profile.losses,playerHistory:playerRating,activityHistory:finaldates,avatarUrl:profile.avatarUrl})
 
 
     }catch(err){
