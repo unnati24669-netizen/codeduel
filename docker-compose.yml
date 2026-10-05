@@ -4,6 +4,11 @@ services:
     image: redis:alpine
     ports:
         - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
     
 
   backend:
@@ -13,12 +18,14 @@ services:
 
     environment:
      REDIS_URL: redis://redis:6379
+     NODE_OPTIONS: --dns-result-order=ipv4first
 
     ports:
      - "5500:5500"
 
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
 
 
   frontend:

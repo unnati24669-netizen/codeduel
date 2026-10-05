@@ -9,21 +9,23 @@ client.on(
 );
 
  
-client.connect().then(() => console.log("Redis connected")).catch(err => console.log("Redis connection failed:", err));
+const clientPromise = client.connect()
+  .then(() => console.log("Redis connected"))
+  .catch((err) => {
+    console.log("Redis connection failed:", err);
+    throw err;
+  });
 const QUEUE_NAME="matchmaking_queue";
 const SOCKET_MAPPING="socket_map";
  async function addToQueue(userId,rating,socketId){
     try{
-        const ratingValue = String(rating);
-        await client.hSet(SOCKET_MAPPING, `${userId}:rating`, ratingValue);
-        await client.hSet(SOCKET_MAPPING, String(userId), String(socketId));
-        await client.zAdd(QUEUE_NAME, [{ score: Number(rating), value: String(userId) }]);
+   const ratingValue = String(rating);
+    await client.hSet(SOCKET_MAPPING, `${userId}:rating`, ratingValue);
+    await client.hSet(SOCKET_MAPPING, String(userId), String(socketId));
+    await client.zAdd(QUEUE_NAME, [{ score: Number(rating), value: String(userId) }]);
     }catch(err){
         console.log(err);
     }
-
-   
-    
 
 }
 
@@ -90,4 +92,4 @@ async function getSocketId(userId){
     }
 }
 
-module.exports={addToQueue,tryClaimMatch,findInRange,getSocketId,removeFromQueue,QUEUE_NAME,client}
+module.exports={addToQueue,tryClaimMatch,findInRange,getSocketId,removeFromQueue,QUEUE_NAME,client,clientPromise,SOCKET_MAPPING}

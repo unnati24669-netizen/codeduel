@@ -1,5 +1,5 @@
 const {PutObjectCommand}=require("@aws-sdk/client-s3")
-const {s3Client}=require("../config/s3config.js")
+const {s3client}=require("../config/s3config.js")
 const User=require("../models/user.js")
 const mapping={
     "image/jpeg":"jpeg",
@@ -25,17 +25,19 @@ const avatarController=async(req,res)=>{
         const key=`avatars/${userId}-${Date.now()}.${mapping[req.file.mimetype]}`; // Generate a unique key for the file in S3
 
         const command = new PutObjectCommand({
-        Bucket: "codeduel-bucket",
+        Bucket: process.env.AWS_BUCKET_NAME,
         Key: key,
         Body: req.file.buffer,
         ContentType: req.file.mimetype,
     
          });
-         await s3Client.send(command);
+         await s3client.send(command);
 
-        const URL=`https://codeduel-bucket.s3.eu-north-1.amazonaws.com/${key}`; // Construct the URL of the uploaded file
 
+        const URL=`https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`; // Construct the URL of the uploaded file
+        
         const uploaded=await User.findOneAndUpdate({_id:userId},{avatarUrl:URL});
+        console.log("update result:", uploaded);
         if(uploaded){
             return res.status(200).json({avatarUrl:URL})
         }
@@ -44,7 +46,7 @@ const avatarController=async(req,res)=>{
 
 
     }catch(err){
-        res.status(500).json({message:"some error occurred"})
+        res.status(501).json({message:" error occurred"})
         console.log(err);
 
 

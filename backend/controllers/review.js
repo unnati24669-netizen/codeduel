@@ -7,7 +7,7 @@ async function geminiApi(details){
         "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
         {...details},
         {
-            timeout: 20000,
+            timeout: 60000,
             headers: { "Authorization": `Bearer ${process.env.GEMINI_API_KEY}` },
         }
     )
@@ -61,7 +61,7 @@ async function review(req,res){
         "role":"user",
         "content":`here is my code ${code} question ${questionText} and language ${language}`
     }],
-    "model":"gemini-2.0-flash",
+    "model":"gemini-3.8-flash",
     "temperature":0.5}
 
     const response=await  geminiApi(details)
@@ -95,7 +95,7 @@ async function chatContinuation(req,res){
     
 
     const details={"messages":[{"role":"system","content":systemPrompt},...history,{"role":"user","content":chat}],
-    "model":"gemini-2.0-flash",
+    "model":"gemini-3.8-flash",
     "temperature":0.5}
 
     const response=await geminiApi(details)

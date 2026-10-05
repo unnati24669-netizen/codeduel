@@ -11,8 +11,9 @@ const {initsocket}=require("./socket/index")
 const matchrouter=require("./routes/matchroute")
 const router=require("./routes/geminiroute")
 const leaderboardRouter=require("./routes/leaderboardroute")
-const {limiter}=require("./rate-limiter")
-const {strictLimiter}=require("./rate-limiter")
+
+
+
 app.use(express.json());
 app.use(cors({
     origin:"http://localhost:5173",
@@ -20,11 +21,18 @@ app.use(cors({
 }));
 
 
-app.use("/api/user",userRouter);
-app.use("/api/question",questionRouter)
-app.use("/api/leaderboard",leaderboardRouter)
-let io;
-mongoose.connect(process.env.MONGO_URL).then(async()=>{
+
+
+  
+    app.use("/api/user",userRouter);
+    app.use("/api/question",questionRouter)
+    app.use("/api/leaderboard",leaderboardRouter)
+    let io;
+mongoose.connect(process.env.MONGO_URL, {
+  family: 4,
+  serverSelectionTimeoutMS: 30000,
+  connectTimeoutMS: 30000,
+}).then(async()=>{
     console.log("Connected to MongoDB")
     io = await initsocket(server);
     app.use("/api/match",matchrouter(io));
@@ -33,4 +41,10 @@ mongoose.connect(process.env.MONGO_URL).then(async()=>{
         console.log(`Server is running on port ${process.env.PORT}`)
     })
 }).catch((err)=>console.log(err));
+
+
+
+
+
+
 

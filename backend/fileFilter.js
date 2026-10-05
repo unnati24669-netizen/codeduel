@@ -8,3 +8,5 @@ const fileFilter=(req,file,cb)=>{
     }
 
 }
+
+module.exports=fileFilter

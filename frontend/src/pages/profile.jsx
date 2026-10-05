@@ -4,7 +4,7 @@ import { useParams } from "react-router-dom";
 import { profile, uploadAvatar } from "../slice/profileSlice";
 import ActivityHeatmap from "../components/heatMap";
 import IndexLineChart from "../components/ratingGraph";
-import { Pencil } from "lucide-react";
+import { FiEdit2 } from "react-icons/fi";
 
 export default function Profile() {
     const { userId } = useParams();
@@ -27,8 +27,9 @@ export default function Profile() {
     const isLoading = useSelector((state) => state.profile.isLoading);
     const isError = useSelector((state) => state.profile.isError);
     const avatarUrl = useSelector((state) => state.profile.avatarUrl);
+    const currentUserId = useSelector((state) => state.auth.user._id);
 
-    const isOwner = userId === localStorage.getItem("userId");
+    const isOwner = userId === currentUserId;
 
     const handleFileChange = (e) => {
         const file = e.target.files[0];
@@ -41,84 +42,98 @@ export default function Profile() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
-            {isLoading && (
-                <div className="flex flex-col items-center gap-4">
-                    <div className="w-10 h-10 border-4 border-slate-700 border-t-indigo-500 rounded-full animate-spin"></div>
-                    <div className="text-slate-400 text-sm">Loading profile…</div>
-                </div>
-            )}
+        <main className="min-h-screen bg-slate-950 text-slate-100">
+            <div className="mx-auto w-full max-w-6xl px-5 py-8 sm:px-8 lg:py-12">
+                <input
+                    type="file"
+                    accept="image/*"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    className="hidden"
+                />
 
-            {isError && (
-                <div className="text-red-400 bg-red-950/50 border border-red-900 rounded-lg px-4 py-3">
-                    Could not fetch data
-                </div>
-            )}
+                {isLoading && (
+                    <div className="flex min-h-72 flex-col items-center justify-center gap-4">
+                        <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-700 border-t-indigo-500"></div>
+                        <div className="text-sm text-slate-400">Loading profile…</div>
+                    </div>
+                )}
 
-            <input
-                type="file"
-                accept="image/*"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                className="hidden"
-            />
+                {isError && (
+                    <div className="border-y border-red-900 py-5 text-red-300">
+                        Could not fetch profile data.
+                    </div>
+                )}
 
-            {!isLoading && !isError && (
-                <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-8">
-                    <div className="flex flex-col items-center mb-6">
-                        <div className="relative w-20 h-20 mb-3">
-                            <div className="w-full h-full rounded-full bg-indigo-600 flex items-center justify-center text-2xl font-semibold text-white overflow-hidden">
-                                {avatarUrl ? (
-                                    <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-                                ) : (
-                                    username?.charAt(0).toUpperCase()
-                                )}
+                {!isLoading && !isError && username && (
+                    <>
+                        <section className="flex flex-col gap-6 border-b border-slate-800 pb-8 sm:flex-row sm:items-center">
+                            <div className="flex min-w-0 items-center gap-5">
+                                <div className="group relative h-20 w-20 shrink-0">
+                                    <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-slate-800 text-3xl font-semibold text-slate-200 ring-1 ring-slate-700">
+                                        {avatarUrl ? (
+                                            <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                                        ) : (
+                                            username.charAt(0).toUpperCase()
+                                        )}
+                                    </div>
+                                    {isOwner && (
+                                        <button
+                                            type="button"
+                                            aria-label="Edit profile picture"
+                                            title="Edit profile picture"
+                                            onClick={() => fileInputRef.current.click()}
+                                            className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full border border-slate-700 bg-slate-900 text-slate-200 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 hover:bg-slate-800"
+                                        >
+                                            <FiEdit2 size={14} />
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="mb-1 text-xs font-medium uppercase text-slate-500">CodeDuel profile</p>
+                                    <h1 className="truncate text-2xl font-semibold sm:text-3xl">{username}</h1>
+                                </div>
                             </div>
+                            <div className="sm:ml-auto sm:border-l sm:border-slate-800 sm:pl-8">
+                                <p className="text-xs font-medium uppercase text-slate-500">Rating</p>
+                                <p className="mt-1 text-3xl font-semibold text-orange-300">{rating}</p>
+                            </div>
+                        </section>
 
-                            {isOwner && (
-                                <button
-                                    type="button"
-                                    onClick={() => fileInputRef.current.click()}
-                                    className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center text-slate-200 hover:bg-slate-700 transition-colors"
-                                >
-                                    <Pencil size={14} />
-                                </button>
-                            )}
-                        </div>
-                        <h1 className="text-xl font-semibold text-slate-100">{username}</h1>
-                        <span className="mt-1 text-sm text-indigo-400 bg-indigo-950/50 border border-indigo-900 px-3 py-1 rounded-full">
-                            Rating: {rating}
-                        </span>
-                    </div>
+                        <section aria-label="Match statistics" className="grid grid-cols-3 divide-x divide-slate-800 border-b border-slate-800 py-6">
+                            <div className="px-3 first:pl-0 sm:px-6">
+                                <p className="text-2xl font-semibold tabular-nums">{matchesPlayed}</p>
+                                <p className="mt-1 text-sm text-slate-500">Matches</p>
+                            </div>
+                            <div className="px-3 sm:px-6">
+                                <p className="text-2xl font-semibold tabular-nums text-emerald-400">{wins}</p>
+                                <p className="mt-1 text-sm text-slate-500">Wins</p>
+                            </div>
+                            <div className="px-3 sm:px-6">
+                                <p className="text-2xl font-semibold tabular-nums text-rose-400">{loss}</p>
+                                <p className="mt-1 text-sm text-slate-500">Losses</p>
+                            </div>
+                        </section>
 
-                    <div className="grid grid-cols-3 gap-3">
-                        <div className="bg-slate-800/60 border border-slate-700 rounded-lg p-4 text-center">
-                            <div className="text-lg font-semibold text-slate-100">{matchesPlayed}</div>
-                            <div className="text-xs text-slate-500 mt-1">Matches</div>
-                        </div>
-                        <div className="bg-slate-800/60 border border-slate-700 rounded-lg p-4 text-center">
-                            <div className="text-lg font-semibold text-green-400">{wins}</div>
-                            <div className="text-xs text-slate-500 mt-1">Wins</div>
-                        </div>
-                        <div className="bg-slate-800/60 border border-slate-700 rounded-lg p-4 text-center">
-                            <div className="text-lg font-semibold text-red-400">{loss}</div>
-                            <div className="text-xs text-slate-500 mt-1">Losses</div>
-                        </div>
-                    </div>
+                        <section className="border-b border-slate-800 py-8 sm:py-10">
+                            <h2 className="mb-5 text-lg font-semibold">Rating history</h2>
+                            <IndexLineChart data={playerHistory} />
+                        </section>
 
-                    <div className="mt-6">
-                        <h2 className="text-lg font-semibold text-slate-100 mb-3">Rating History</h2>
-                        <IndexLineChart data={playerHistory} />
-                    </div>
-                    <div className="mt-6">
-                        <h2 className="text-lg font-semibold text-slate-100 mb-3">Activity Heatmap</h2>
-                        <ActivityHeatmap
-                            startDate={new Date(new Date().setFullYear(new Date().getFullYear() - 1))}
-                            activity={activityHistory}
-                        />
-                    </div>
-                </div>
-            )}
-        </div>
+                        <section className="py-8 sm:py-10">
+                            <h2 className="mb-5 text-lg font-semibold">Activity</h2>
+                            <div className="overflow-x-auto pb-2">
+                                <div className="min-w-[680px]">
+                                    <ActivityHeatmap
+                                        startDate={new Date(new Date().setFullYear(new Date().getFullYear() - 1))}
+                                        activity={activityHistory}
+                                    />
+                                </div>
+                            </div>
+                        </section>
+                    </>
+                )}
+            </div>
+        </main>
     );
 }

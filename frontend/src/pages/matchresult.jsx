@@ -20,17 +20,11 @@ function Me({ username, ratingChange, status }) {
 
 function GeminiReview({ code, languageId, setGemini }) {
   const question = useSelector((state) => state.match.question);
-  const language = languages.find((language) => language.languageId === languageId);
+ 
+
   const [history, setHistory] = useState([]);
   const [input, setInput] = useState("");
   const [error, setError] = useState(null);
-  const requiredQuestion = question
-    ? {
-        title: question.title,
-        description: question.description,
-        timeLimit: question.timeLimit,
-      }
-    : null;
 
   useEffect(() => {
     const callGemini = async () => {
@@ -39,16 +33,17 @@ function GeminiReview({ code, languageId, setGemini }) {
           setError(new Error("No code is available for review."));
           return;
         }
+        const language = languages.find((item) => item.languageId === languageId);
         if (!languageId || !language) {
           setError(new Error("Language information is unavailable."));
           return;
         }
-        if (!requiredQuestion || !requiredQuestion.description) {
+        if (!question?.description) {
           setError(new Error("Question information is unavailable."));
           return;
         }
 
-        const questionText = `${requiredQuestion.title}\n\n${requiredQuestion.description}\n\nTime Limit: ${requiredQuestion.timeLimit}`;
+        const questionText = `${question.title}\n\n${question.description}\n\nTime Limit: ${question.timeLimit}`;
         const reviewResponse = await geminiAPIreview({ code, question: questionText, language: language.name });
         if (reviewResponse) {
           setHistory((prev) => [...prev, ...reviewResponse]);
@@ -59,7 +54,7 @@ function GeminiReview({ code, languageId, setGemini }) {
       }
     };
     callGemini();
-  }, [code, languageId, language, requiredQuestion]);
+  }, [code, languageId, question]);
 
   async function chatContinue() {
     try {
@@ -123,6 +118,8 @@ export default function Result() {
   const my_id = useSelector((state) => state.auth.user._id);
   const players = useSelector((state) => state.match.players);
   const winner = useSelector((state) => state.match.winner);
+  console.log(my_id)
+  console.log(players[0].playerId)
   let my_username;
   let opponent_username;
   let abandon = false;

@@ -1,6 +1,6 @@
 import CalendarHeatmap from 'react-calendar-heatmap';
 import 'react-calendar-heatmap/dist/styles.css';
-import './heatmap.css'
+import '../../heatmap.css'
 
 
 
